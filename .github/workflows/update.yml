@@ -1,33 +1,26 @@
 name: Auto Update Japan Trends
 on:
   schedule:
-    - cron: '0 16 * * *' # 台灣凌晨 0:00 自動執行
-  workflow_dispatch:      # 允許手動執行
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+
+# 加入環境變數解決警告
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 關鍵修正：將 v3 升級到 v4，支援 Node.js 20
-      - name: Checkout code
-        uses: actions/checkout@v4 
-
-      # 關鍵修正：將 v4 升級到 v5，支援 Node.js 20
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-
-      - name: Install dependencies
-        run: pip install requests
-
-      - name: Run Scraper
-        run: python scraper.py
-
-      - name: Commit and Push
-        run: |
+      - run: pip install requests
+      - run: python scraper.py
+      - run: |
           git config --global user.name "TrendBot"
           git config --global user.email "bot@github.com"
           git add data.json
-          git commit -m "Auto-update trends and rates" || exit 0
+          git commit -m "update" || exit 0
           git push
