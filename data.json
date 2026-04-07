@@ -16,102 +16,50 @@
             "cat": "醫藥保健",
             "jpy": 1680,
             "tw_hot": 98,
-            "trend": [
-                90,
-                92,
-                94,
-                96,
-                97,
-                98,
-                98
-            ]
+            "trend": [90, 92, 94, 96, 97, 98, 98]
         },
         {
             "name": "&be 河北裕介遮瑕膏",
             "cat": "美妝保養",
             "jpy": 3850,
             "tw_hot": 95,
-            "trend": [
-                80,
-                82,
-                85,
-                88,
-                90,
-                93,
-                95
-            ]
+            "trend": [80, 82, 85, 88, 90, 93, 95]
         },
         {
             "name": "Uniqlo U 系列抽繩包",
             "cat": "服飾配件",
             "jpy": 2990,
             "tw_hot": 88,
-            "trend": [
-                70,
-                75,
-                80,
-                82,
-                85,
-                87,
-                88
-            ]
+            "trend": [70, 75, 80, 82, 85, 87, 88]
         },
         {
             "name": "Snow Peak 鈦金屬單層杯",
             "cat": "戶外露營",
             "jpy": 3190,
             "tw_hot": 82,
-            "trend": [
-                88,
-                87,
-                86,
-                85,
-                84,
-                83,
-                82
-            ]
+            "trend": [88, 87, 86, 85, 84, 83, 82]
         },
         {
             "name": "富士山 KAKUDAI 醬油碟",
             "cat": "生活雜貨",
             "jpy": 1200,
             "tw_hot": 75,
-            "trend": [
-                70,
-                72,
-                74,
-                75,
-                75,
-                75,
-                75
-            ]
+            "trend": [70, 72, 74, 75, 75, 75, 75]
         }
     ],
     "ratio_radar": [
-        {
-            "category": "美妝保養",
-            "value": 95
-        },
-        {
-            "category": "戶外露營",
-            "value": 82
-        },
-        {
-            "category": "服飾配件",
-            "value": 88
-        },
-        {
-            "category": "生活雜貨",
-            "value": 75
-        },
-        {
-            "category": "醫藥保健",
-            "value": 98
-        }
-    ]
+        { "category": "美妝保養", "value": 95 },
+        { "category": "戶外露營", "value": 82 },
+        { "category": "服飾配件", "value": 88 },
+        { "category": "生活雜貨", "value": 75 },
+        { "category": "醫藥保健", "value": 98 }
+    ],
     "monthly_sales": [
-    {"month": "10月", "volume": 45},
-    {"month": "11月", "volume": 52},
-    {"month": "12月", "volume": 88}
-]
+        { "month": "10月", "volume": 45 },
+        { "month": "11月", "volume": 52 },
+        { "month": "12月", "volume": 88 },
+        { "month": "1月", "volume": 65 },
+        { "month": "2月", "volume": 48 },
+        { "month": "3月", "volume": 72 }
+    ]
 }
