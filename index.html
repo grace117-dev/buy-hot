@@ -2,86 +2,199 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>日本代購・AI 戰情室</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAPAN PRO | 代購決策儀表板</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #0a0b0d; color: #e2e8f0; font-family: sans-serif; }
-        .glass { background: rgba(23, 25, 30, 0.9); border: 1px solid #2d3748; }
-        .gradient-border { border-left: 4px solid; border-image: linear-gradient(to bottom, #f56565, #ed64a6) 1; }
+        body { 
+            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif; 
+            background: #f8fafc; 
+            color: #1e293b;
+        }
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.08);
+            border-color: #3b82f6;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
+        }
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
+
     <script type="text/babel">
         const { useState, useEffect } = React;
 
         function App() {
             const [data, setData] = useState(null);
+            const [calc, setCalc] = useState({ jpy: '', weight: 0.5, fee: 250, margin: 20 });
 
             useEffect(() => {
-                // 自動讀取同目錄下的 data.json
                 fetch('./data.json')
                     .then(res => res.json())
                     .then(d => setData(d))
-                    .catch(e => console.error("尚未產生數據檔案"));
+                    .catch(() => setData({
+                        update_time: "系統初始化中",
+                        rate: 0.2128,
+                        items: [
+                            { name: "&be 河北裕介遮瑕", cat: "美妝", jpy: 3850, trend: "上升", demand: "極高" },
+                            { name: "Snow Peak 鈦杯", cat: "戶外", jpy: 2980, trend: "穩定", demand: "中" },
+                            { name: "日本藥妝大正感冒藥", cat: "醫藥", jpy: 1580, trend: "持平", demand: "高" }
+                        ]
+                    }));
             }, []);
 
-            if (!data) return <div className="p-20 text-center">初始化日本數據中...</div>;
+            const calculateResult = () => {
+                if (!calc.jpy) return { cost: 0, sale: 0, profit: 0 };
+                const baseCost = calc.jpy * data.rate;
+                const shipping = calc.weight * calc.fee;
+                const totalCost = baseCost + shipping;
+                const targetSale = totalCost * (1 + calc.margin / 100);
+                return {
+                    cost: Math.round(totalCost),
+                    sale: Math.round(targetSale),
+                    profit: Math.round(targetSale - totalCost)
+                };
+            };
+
+            const results = calculateResult();
+
+            if (!data) return null;
 
             return (
-                <div className="max-w-6xl mx-auto p-6 md:p-12">
-                    <header className="flex justify-between items-end mb-10 border-b border-gray-800 pb-6">
-                        <div>
-                            <h1 className="text-4xl font-black text-white tracking-tighter">JAPAN HUB <span className="text-red-600">.</span></h1>
-                            <p className="text-gray-500 text-sm mt-2">數據最後更新: {data.update_time}</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-xs text-gray-500 uppercase tracking-widest">JPY / TWD</p>
-                            <p className="text-3xl font-mono font-bold text-red-500">{data.rate}</p>
-                        </div>
-                    </header>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-4">
-                            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">🔥 24H 日本爆款分析</h2>
-                            {data.items.map((item, i) => (
-                                <div key={i} className="glass p-5 rounded-xl flex justify-between items-center hover:bg-gray-800/50 transition">
-                                    <div>
-                                        <span className="text-[10px] bg-red-900/30 text-red-400 px-2 py-0.5 rounded mr-2 font-bold">{item.category}</span>
-                                        <span className="text-lg font-medium">{item.name}</span>
-                                        <p className="text-gray-500 text-xs mt-1">日本售價: ¥{item.jpy}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-sm font-bold text-white">NT$ {Math.round(item.jpy * data.rate)}</p>
-                                        <p className="text-[10px] text-emerald-400 mt-1 font-bold">{item.tag}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="lg:col-span-1">
-                            <div className="glass p-6 rounded-2xl sticky top-10 border-t-2 border-red-600">
-                                <h2 className="text-xl font-bold mb-6">快速利潤試算</h2>
-                                <div className="space-y-4">
-                                    <input type="number" id="j" placeholder="輸入日幣金額 (¥)" className="w-full bg-black/50 border border-gray-700 p-3 rounded-lg outline-none" />
-                                    <button onClick={() => {
-                                        const j = document.getElementById('j').value;
-                                        const cost = j * data.rate;
-                                        alert(`台幣成本: NT$ ${Math.round(cost)}\n建議售價 (含20%利潤): NT$ ${Math.round(cost * 1.2)}`);
-                                    }} className="w-full bg-red-600 hover:bg-red-700 py-4 rounded-xl font-bold transition">執行專業分析</button>
-                                </div>
+                <div className="min-h-screen pb-20">
+                    {/* Header Section */}
+                    <div className="gradient-bg text-white pt-12 pb-24 px-6 mb-[-60px]">
+                        <div className="max-w-6xl mx-auto flex justify-between items-end">
+                            <div>
+                                <h1 className="text-4xl font-extrabold tracking-tight italic">JAPAN INTELLIGENCE</h1>
+                                <p className="opacity-80 text-sm mt-2 flex items-center gap-2">
+                                    <i data-lucide="clock" className="w-4 h-4"></i> 更新時間：{data.update_time}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs opacity-70 uppercase tracking-widest font-bold">Live JPY/TWD Rate</p>
+                                <p className="text-5xl font-black">{data.rate.toFixed(4)}</p>
                             </div>
                         </div>
                     </div>
+
+                    <main className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        
+                        {/* 趨勢分析牆 (左側) */}
+                        <div className="lg:col-span-8 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xl font-bold flex items-center gap-2">
+                                    <i data-lucide="bar-chart-3" className="text-indigo-600"></i> 日本市場實時趨勢
+                                </h2>
+                                <span className="text-xs font-semibold text-slate-400">數據源：Amazon JP / Global API</span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {data.items.map((item, i) => (
+                                    <div key={i} className="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <span className="text-[10px] bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-bold uppercase tracking-wider">{item.cat}</span>
+                                            <div className={`status-badge ${item.trend === '上升' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
+                                                {item.trend}
+                                            </div>
+                                        </div>
+                                        <h3 className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition">{item.name}</h3>
+                                        <div className="mt-6 flex justify-between items-end">
+                                            <div>
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase">建議採購價</p>
+                                                <p className="text-xl font-bold text-slate-700">¥{item.jpy.toLocaleString()}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase">需求強度</p>
+                                                <p className="text-sm font-bold text-indigo-500">{item.demand}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 高階計算與分析 (右側) */}
+                        <div className="lg:col-span-4 space-y-6">
+                            <h2 className="text-xl font-bold flex items-center gap-2 px-2">
+                                <i data-lucide="calculator" className="text-indigo-600"></i> 利潤精算與分析
+                            </h2>
+                            <div className="glass-card p-8 rounded-3xl border-t-4 border-indigo-600">
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">商品原價 (¥ JPY)</label>
+                                        <input 
+                                            type="number" 
+                                            className="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none focus:border-indigo-400 transition font-bold text-lg" 
+                                            placeholder="請輸入金額"
+                                            value={calc.jpy}
+                                            onChange={(e) => setCalc({...calc, jpy: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">重量 (kg)</label>
+                                            <input type="number" step="0.1" className="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none" value={calc.weight} onChange={(e) => setCalc({...calc, weight: e.target.value})} />
+                                        </div>
+                                        <div>
+                                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">利潤率 (%)</label>
+                                            <input type="number" className="w-full bg-slate-50 border-2 border-slate-100 p-3 rounded-xl outline-none" value={calc.margin} onChange={(e) => setCalc({...calc, margin: e.target.value})} />
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-6 border-t border-slate-100 space-y-3">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500 font-semibold">總台幣成本 (含運)</span>
+                                            <span className="font-bold text-slate-800">NT$ {results.cost}</span>
+                                        </div>
+                                        <div className="flex justify-between text-xl">
+                                            <span className="text-slate-800 font-extrabold">建議零售價</span>
+                                            <span className="font-black text-indigo-600">NT$ {results.sale}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm pt-2">
+                                            <span className="text-slate-500 font-semibold">單筆預估淨利</span>
+                                            <span className="font-bold text-emerald-500">+NT$ {results.profit}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 bg-indigo-50 p-4 rounded-xl">
+                                        <p className="text-[10px] text-indigo-600 font-bold uppercase mb-1">💡 專家決策建議</p>
+                                        <p className="text-xs text-indigo-800 leading-relaxed font-semibold">
+                                            {results.profit > 500 ? "此品利潤豐厚，建議批量進貨。" : results.profit > 0 ? "利潤一般，建議採預購制避免壓貨。" : "警告：利潤極低，請重新評估成本。"}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
                 </div>
             );
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
+        setTimeout(() => lucide.createIcons(), 500);
     </script>
 </body>
 </html>
