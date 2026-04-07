@@ -1,22 +1,27 @@
 name: Auto Update Japan Trends
 on:
   schedule:
-    - cron: '0 16 * * *' # 國際時間 16:00 即台灣凌晨 0:00
-  workflow_dispatch: # 允許手動點擊執行
+    - cron: '0 16 * * *' # 台灣凌晨 0:00 自動執行
+  workflow_dispatch:      # 允許手動執行
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      # 升級到 v4 版本以支援最新的 Node.js 環境
+      - uses: actions/checkout@v4 
+
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.10'
+
       - name: Install dependencies
         run: pip install requests
+
       - name: Run Scraper
         run: python scraper.py
+
       - name: Commit and Push
         run: |
           git config --global user.name "TrendBot"
