@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAPAN PRO | 日本代購決策終端 - 栞 - v6.0</title>
+    <title>JAPAN PRO | 日本代購決策終端 - 栞</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -12,42 +12,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-base: #fdfcfc;
-            --bg-card: #ffffff;
-            --text-main: #334155;
-            --text-sub: #64748b;
-            --accent: #f43f5e; /* 櫻花紅 */
-            --accent-soft: #fff1f1;
-            --border: #e2e8f0;
-        }
-        body { 
-            font-family: 'Noto Sans TC', sans-serif; 
-            background: var(--bg-base); 
-            color: var(--text-main);
-            letter-spacing: 0.05em;
-        }
-        h1, h2, h3, .jp-font {
-            font-family: 'Noto Serif JP', serif;
-        }
-        .wabi-sabi-card { 
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .wabi-sabi-card:hover { 
-            border-color: #cbd5e1;
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.03);
-        }
-        .rank-number {
-            font-family: 'Noto Serif JP', serif;
-            font-weight: 900;
-            font-style: italic;
-            color: var(--accent);
-            opacity: 0.2;
-            font-size: 3rem;
-            line-height: 1;
-        }
+        :root { --bg-base: #fdfcfc; --bg-card: #ffffff; --text-main: #334155; --accent: #f43f5e; --border: #e2e8f0; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg-base); color: var(--text-main); letter-spacing: 0.05em; }
+        h1, h2, .jp-font { font-family: 'Noto Serif JP', serif; }
+        .wabi-sabi-card { background: var(--bg-card); border: 1px solid var(--border); transition: all 0.4s; }
+        .rank-number { font-family: 'Noto Serif JP', serif; font-weight: 900; color: var(--accent); opacity: 0.15; font-size: 3.5rem; line-height: 1; }
     </style>
 </head>
 <body>
@@ -59,185 +28,153 @@
         function App() {
             const [data, setData] = useState(null);
             const [calc, setCalc] = useState({ jpy: '', weight: 0.5 });
-            const radarChartRef = useRef(null); // 雷達圖實例
-            const lineChartsRef = useRef([]); // 行程圖實例陣列
+            const chartsInit = useRef(false);
 
             useEffect(() => {
-                fetch('./data.json')
+                // 強制抓取最新 JSON，避免快取
+                fetch(`./data.json?t=${new Date().getTime()}`)
                     .then(res => res.json())
-                    .then(d => {
-                        setData(d);
-                        renderRadarChart(d.ratio_radar); // 繪製雷達圖
-                        // 數據載入並跑完 React 渲染後，再繪製排行榜小趨勢圖
-                        setTimeout(() => renderLineCharts(d.ranking, d.dates), 100);
-                    })
-                    .catch(() => console.error("數據載入失敗"));
+                    .then(d => setData(d))
+                    .catch(e => console.error("Data Load Error:", e));
             }, []);
 
-            // 繪製分類熱度雷達圖
-            const renderRadarChart = (radarData) => {
-                const ctx = document.getElementById('radarChart').getContext('2d');
-                if (radarChartRef.current) radarChartRef.current.destroy();
+            useEffect(() => {
+                // 核心修正：確保 data 存在且只初始化一次圖表
+                if (data && !chartsInit.current) {
+                    setTimeout(() => {
+                        renderRadarChart(data.ratio_radar);
+                        renderLineCharts(data.ranking, data.dates);
+                        lucide.createIcons();
+                        chartsInit.current = true;
+                    }, 300);
+                }
+            }, [data]);
 
-                radarChartRef.current = new Chart(ctx, {
+            const renderRadarChart = (radarData) => {
+                const el = document.getElementById('radarChart');
+                if (!el) return;
+                new Chart(el.getContext('2d'), {
                     type: 'radar',
                     data: {
                         labels: radarData.map(d => d.category),
                         datasets: [{
-                            label: '綜合熱度',
                             data: radarData.map(d => d.value),
                             backgroundColor: 'rgba(244, 63, 94, 0.1)',
                             borderColor: '#f43f5e',
                             borderWidth: 1,
-                            pointBackgroundColor: '#f43f5e',
                             pointRadius: 2
                         }]
                     },
-                    options: {
-                        scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: '#f1f5f9' }, angleLines: { color: '#f1f5f9' } } },
-                        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${ctx.raw}pt` } } }
+                    options: { 
+                        scales: { r: { min: 0, max: 100, ticks: { display: false } } },
+                        plugins: { legend: { display: false } }
                     }
                 });
             };
 
-            // 繪製排行榜小趨勢圖 ( Sparklines )
-            const renderLineCharts = (rankingData, dates) => {
-                rankingData.forEach((item, i) => {
-                    const ctx = document.getElementById(`lineChart-${i}`).getContext('2d');
-                    // 銷毀舊實例
-                    if (lineChartsRef.current[i]) lineChartsRef.current[i].destroy();
-
-                    lineChartsRef.current[i] = new Chart(ctx, {
+            const renderLineCharts = (ranking, dates) => {
+                ranking.forEach((item, i) => {
+                    const el = document.getElementById(`lineChart-${i}`);
+                    if (!el) return;
+                    new Chart(el.getContext('2d'), {
                         type: 'line',
                         data: {
                             labels: dates,
                             datasets: [{
                                 data: item.trend,
-                                borderColor: i === 0 ? '#f43f5e' : '#94a3b8', // 第一名用櫻花紅，其餘用灰藍
+                                borderColor: i === 0 ? '#f43f5e' : '#94a3b8',
                                 borderWidth: 1.5,
-                                fill: false,
-                                pointRadius: 0,
-                                tension: 0.4 // 曲線平滑度
+                                tension: 0.4,
+                                pointRadius: 0
                             }]
                         },
                         options: {
-                            events: [], // 關閉所有互動以提升效能
                             scales: { x: { display: false }, y: { display: false, min: 0, max: 100 } },
-                            plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                            plugins: { legend: { display: false } }
                         }
                     });
                 });
             };
 
-            const calculateCost = () => {
-                if (!calc.jpy || !data) return 0;
-                // 日式代購計費通常較細緻，這裡預設空運 230/kg
-                const shipping = calc.weight * 230;
-                const cost = (calc.jpy * data.rate) + shipping;
-                return Math.round(cost);
-            };
+            if (!data) return <div className="p-20 text-center jp-font text-rose-600">數據讀取中...</div>;
 
-            const totalCost = calculateCost();
-
-            if (!data) return <div className="p-20 text-center text-rose-600 font-bold jp-font">數據を読み込み中...</div>;
+            const totalCost = Math.round((calc.jpy * data.rate) + (calc.weight * 230));
 
             return (
                 <div className="min-h-screen pb-16">
-                    {/* Header */}
-                    <header className="max-w-[1400px] mx-auto p-6 md:p-10 flex justify-between items-center border-b border-gray-100">
+                    <header className="max-w-[1400px] mx-auto p-10 flex justify-between items-center border-b border-gray-100">
                         <div>
-                            <h1 className="text-3xl font-black text-slate-900 tracking-tighter flex items-center gap-3">
-                                <i data-lucide="compass" className="text-rose-600 w-7 h-7"></i> 日本代購決策終端 <span className="text-xs bg-rose-50 text-rose-600 px-2 py-0.5 rounded jp-font">栞</span>
+                            <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3">
+                                <i data-lucide="compass" className="text-rose-600"></i> 日本代購決策終端
                             </h1>
-                            <p className="text-slate-500 text-xs mt-1.5 jp-font">情報の波を読み、最善の選択を。最後更新：{data.update_time}</p>
+                            <p className="text-slate-500 text-xs mt-1.5 jp-font tracking-widest">最後更新：{data.update_time}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold"> Live JPY/TWD</p>
-                            <p className="text-5xl font-extrabold text-slate-900 tracking-tight">{data.rate.toFixed(4)}</p>
+                            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Live JPY/TWD</p>
+                            <p className="text-5xl font-black text-slate-900 tracking-tighter">{data.rate.toFixed(4)}</p>
                         </div>
                     </header>
 
-                    {/* Main Content */}
-                    <main className="max-w-[1400px] mx-auto px-6 md:px-10 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
-                        
-                        {/* 左側：分類綜合熱度 (雷達圖) */}
+                    <main className="max-w-[1400px] mx-auto px-10 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
+                        {/* 左側：雷達圖 */}
                         <div className="lg:col-span-3 space-y-6">
-                            <h2 className="text-sm font-bold flex items-center gap-2.5 px-1 text-slate-500 uppercase tracking-widest">
-                                <i data-lucide="hexagon" className="text-rose-500 w-4 h-4"></i> 分類綜合實力 (熱度pt)
+                            <h2 className="text-sm font-bold flex items-center gap-2 text-slate-500 uppercase tracking-widest">
+                                <i data-lucide="hexagon" className="text-rose-500 w-4 h-4"></i> 分類綜合實力
                             </h2>
-                            <div className="wabi-sabi-card p-8 rounded-2xl relative h-[360px] flex flex-col justify-center items-center">
+                            <div className="wabi-sabi-card p-8 rounded-2xl h-[360px] flex flex-col justify-center items-center">
                                 <canvas id="radarChart"></canvas>
                                 <div className="absolute text-center mt-[-10px]">
-                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">採集品項</p>
-                                    <p className="text-4xl font-extrabold text-slate-900">5</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase">品項</p>
+                                    <p className="text-4xl font-black text-slate-800">{data.ranking.length}</p>
                                 </div>
-                            </div>
-                            <div className="bg-rose-50 text-rose-800 p-4 rounded-xl text-xs leading-relaxed jp-font">
-                                此圖表展示不同分類下商品的平均台灣搜尋熱度（pt）。指標越高，代表該類別在台灣市場的需求越旺盛。
                             </div>
                         </div>
 
-                        {/* 中間：台灣市場熱度排行 (含趨勢圖) */}
+                        {/* 中間：排行榜 */}
                         <div className="lg:col-span-5 space-y-6">
-                            <h2 className="text-sm font-bold flex items-center gap-2.5 px-1 text-slate-500 uppercase tracking-widest">
-                                <i data-lucide="trending-up" className="text-rose-500 w-4 h-4"></i> 台灣代購熱度流動排行 (7日趨勢)
+                            <h2 className="text-sm font-bold flex items-center gap-2 text-slate-500 uppercase tracking-widest">
+                                <i data-lucide="trending-up" className="text-rose-500 w-4 h-4"></i> 台灣熱度流動排行
                             </h2>
                             <div className="space-y-4">
                                 {data.ranking.map((item, i) => (
-                                    <div key={i} className="wabi-sabi-card p-6 rounded-2xl flex justify-between items-center group relative overflow-hidden">
+                                    <div key={i} className="wabi-sabi-card p-6 rounded-2xl flex justify-between items-center relative overflow-hidden group">
                                         <div className="flex items-center gap-5 z-10">
                                             <div className="rank-number">{i + 1}</div>
                                             <div>
                                                 <h3 className="font-bold text-slate-900 text-lg">{item.name}</h3>
-                                                <p className="text-xs text-slate-500 mt-1 flex items-center gap-2 jp-font">
-                                                    <span className="text-rose-600 font-medium">{item.cat}</span> • 
-                                                    日本售價: ¥{item.jpy.toLocaleString()}
+                                                <p className="text-xs text-slate-500 jp-font">
+                                                    <span className="text-rose-600 font-medium">{item.cat}</span> • ¥{item.jpy.toLocaleString()}
                                                 </p>
                                             </div>
                                         </div>
-                                        {/* 嵌入的小型趨勢圖 (Sparkline) */}
-                                        <div className="absolute inset-x-0 bottom-0 h-16 px-6 z-0 opacity-60 group-hover:opacity-100 transition">
+                                        <div className="absolute inset-x-0 bottom-0 h-16 px-6 opacity-40 group-hover:opacity-80 transition">
                                             <canvas id={`lineChart-${i}`}></canvas>
                                         </div>
-                                        <div className="text-right z-10 flex flex-col items-end">
-                                            <p className="text-sm font-bold text-slate-900">NT$ {Math.round(item.jpy * data.rate)}</p>
-                                            <p className="text-[10px] bg-white/70 px-1.5 py-0.5 rounded text-slate-400 mt-1 jp-font">成本預估</p>
+                                        <div className="text-right z-10">
+                                            <p className="text-sm font-bold text-slate-900 tracking-tight">NT$ {Math.round(item.jpy * data.rate)}</p>
+                                            <p className="text-[9px] bg-slate-100 px-1 rounded text-slate-400 mt-1">成本</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* 右側：日式利潤精算 (無印風) */}
+                        {/* 右側：計算機 */}
                         <div className="lg:col-span-4 space-y-6">
-                            <h2 className="text-sm font-bold flex items-center gap-2.5 px-1 text-slate-500 uppercase tracking-widest">
-                                <i data-lucide="pencil" className="text-rose-500 w-4 h-4"></i> 利潤精算與分析
+                            <h2 className="text-sm font-bold flex items-center gap-2 text-slate-500 uppercase tracking-widest">
+                                <i data-lucide="pencil" className="text-rose-500 w-4 h-4"></i> 利潤精算
                             </h2>
-                            <div className="wabi-sabi-card p-8 rounded-3xl sticky top-10 border-t-2 border-t-rose-600">
-                                <div className="space-y-5">
+                            <div className="wabi-sabi-card p-8 rounded-3xl border-t-2 border-rose-600">
+                                <div className="space-y-6">
                                     <div>
-                                        <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest jp-font">日本官網原價 (¥ JPY)</label>
-                                        <input type="number" className="w-full bg-slate-50 border border-slate-100 p-3 rounded-lg outline-none focus:border-rose-200 font-bold text-xl text-slate-900" placeholder="5500" value={calc.jpy} onChange={(e) => setCalc({...calc, jpy: e.target.value})} />
+                                        <label className="text-[10px] font-bold text-slate-400 block mb-2 uppercase tracking-widest">商品原價 (¥ JPY)</label>
+                                        <input type="number" className="w-full bg-slate-50 p-3 rounded-lg outline-none focus:border-rose-200 font-bold text-xl" value={calc.jpy} onChange={e => setCalc({...calc, jpy: e.target.value})} />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-[10px] font-bold text-slate-400 block mb-1.5 uppercase tracking-widest jp-font">重量 (kg)</label>
-                                            <input type="number" step="0.1" className="w-full bg-slate-50 border border-slate-100 p-3 rounded-lg outline-none" value={calc.weight} onChange={(e) => setCalc({...calc, weight: e.target.value})} />
-                                        </div>
-                                        <div className="text-right self-end">
-                                            <p className="text-xs text-slate-500 jp-font">空運費: 230 TWD/kg</p>
-                                        </div>
+                                    <div className="flex justify-between items-end border-t border-slate-100 pt-6">
+                                        <span className="text-slate-800 font-bold jp-font">建議售價 <span className="text-xs font-normal text-slate-400">(20%利潤)</span></span>
+                                        <span className="text-3xl font-black text-rose-600 tracking-tighter">NT$ {Math.round(totalCost * 1.2)}</span>
                                     </div>
-                                    <div className="pt-6 border-t border-slate-100 mt-5 space-y-3.5">
-                                        <div className="flex justify-between text-slate-600 text-sm">
-                                            <span className="font-medium jp-font">總成本 (含運)</span>
-                                            <span className="font-bold text-slate-900">NT$ {totalCost}</span>
-                                        </div>
-                                        <div className="flex justify-between text-2xl items-end">
-                                            <span className="text-slate-900 font-extrabold jp-font">建議售價 <span className="text-[10px] text-slate-400 font-normal">(含20%代購費)</span></span>
-                                            <span className="font-black text-rose-600">NT$ {Math.round(totalCost * 1.2)}</span>
-                                        </div>
-                                    </div>
+                                    <p className="text-[10px] text-slate-400 text-center tracking-widest uppercase italic font-bold">Total Cost: NT$ {totalCost}</p>
                                 </div>
                             </div>
                         </div>
@@ -248,7 +185,6 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
-        setTimeout(() => lucide.createIcons(), 500);
     </script>
 </body>
 </html>
