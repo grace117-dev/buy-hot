@@ -1,36 +1,43 @@
 {
-    "update_time": "2026-04-07 14:37:30",
+    "update_time": "2026-04-07 14:46:15",
     "rate": 0.2002,
-    "items": [
+    "ranking": [
         {
-            "name": "日本限定 Bioré 防曬噴霧",
-            "category": "藥妝",
-            "jpy": 880,
-            "tag": "熱銷"
+            "name": "大正感冒藥 Gold A",
+            "cat": "醫藥保健",
+            "jpy": 1680,
+            "tw_hot": 98
         },
         {
-            "name": "Pokémon Center 季節限定公仔",
-            "category": "動漫",
-            "jpy": 2200,
-            "tag": "高利潤"
+            "name": "EVE止痛藥 Quick DX",
+            "cat": "醫藥保健",
+            "jpy": 1980,
+            "tw_hot": 96
         },
         {
-            "name": "Snow Peak 鈦金屬單層杯",
-            "category": "戶外",
-            "jpy": 3190,
-            "tag": "穩定需求"
+            "name": "&be 河北裕介遮瑕膏",
+            "cat": "美妝保養",
+            "jpy": 3850,
+            "tw_hot": 95
         },
         {
-            "name": "WPC 輕量遮光傘",
-            "category": "生活",
-            "jpy": 2860,
-            "tag": "季節性"
+            "name": "IPSA 流金水",
+            "cat": "美妝保養",
+            "jpy": 4400,
+            "tw_hot": 90
         },
         {
-            "name": "Uniqlo C 系列聯名款",
-            "category": "服飾",
-            "jpy": 4990,
-            "tag": "新上市"
+            "name": "Uniqlo U 系列抽繩包",
+            "cat": "服飾配件",
+            "jpy": 2990,
+            "tw_hot": 88
         }
-    ]
+    ],
+    "ratio": {
+        "美妝保養": 25,
+        "戶外露營": 25,
+        "醫藥保健": 25,
+        "服飾配件": 12,
+        "生活雜貨": 12
+    }
 }
