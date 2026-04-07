@@ -1,5 +1,5 @@
 {
-    "update_time": "2026/04/07 14:56",
+    "update_time": "2026/04/07 14:59",
     "dates": [
         "04/01",
         "04/02",
@@ -89,14 +89,6 @@
     ],
     "ratio_radar": [
         {
-            "category": "醫藥保健",
-            "value": 98
-        },
-        {
-            "category": "生活雜貨",
-            "value": 75
-        },
-        {
             "category": "美妝保養",
             "value": 95
         },
@@ -107,6 +99,14 @@
         {
             "category": "服飾配件",
             "value": 88
+        },
+        {
+            "category": "生活雜貨",
+            "value": 75
+        },
+        {
+            "category": "醫藥保健",
+            "value": 98
         }
     ]
 }
