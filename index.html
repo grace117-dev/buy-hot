@@ -1,1 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>日本代購・AI 戰情室</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { background: #0a0b0d; color: #e2e8f0; font-family: sans-serif; }
+        .glass { background: rgba(23, 25, 30, 0.9); border: 1px solid #2d3748; }
+        .gradient-border { border-left: 4px solid; border-image: linear-gradient(to bottom, #f56565, #ed64a6) 1; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
+        function App() {
+            const [data, setData] = useState(null);
+
+            useEffect(() => {
+                // 自動讀取同目錄下的 data.json
+                fetch('./data.json')
+                    .then(res => res.json())
+                    .then(d => setData(d))
+                    .catch(e => console.error("尚未產生數據檔案"));
+            }, []);
+
+            if (!data) return <div className="p-20 text-center">初始化日本數據中...</div>;
+
+            return (
+                <div className="max-w-6xl mx-auto p-6 md:p-12">
+                    <header className="flex justify-between items-end mb-10 border-b border-gray-800 pb-6">
+                        <div>
+                            <h1 className="text-4xl font-black text-white tracking-tighter">JAPAN HUB <span className="text-red-600">.</span></h1>
+                            <p className="text-gray-500 text-sm mt-2">數據最後更新: {data.update_time}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-xs text-gray-500 uppercase tracking-widest">JPY / TWD</p>
+                            <p className="text-3xl font-mono font-bold text-red-500">{data.rate}</p>
+                        </div>
+                    </header>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="lg:col-span-2 space-y-4">
+                            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">🔥 24H 日本爆款分析</h2>
+                            {data.items.map((item, i) => (
+                                <div key={i} className="glass p-5 rounded-xl flex justify-between items-center hover:bg-gray-800/50 transition">
+                                    <div>
+                                        <span className="text-[10px] bg-red-900/30 text-red-400 px-2 py-0.5 rounded mr-2 font-bold">{item.category}</span>
+                                        <span className="text-lg font-medium">{item.name}</span>
+                                        <p className="text-gray-500 text-xs mt-1">日本售價: ¥{item.jpy}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-bold text-white">NT$ {Math.round(item.jpy * data.rate)}</p>
+                                        <p className="text-[10px] text-emerald-400 mt-1 font-bold">{item.tag}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="lg:col-span-1">
+                            <div className="glass p-6 rounded-2xl sticky top-10 border-t-2 border-red-600">
+                                <h2 className="text-xl font-bold mb-6">快速利潤試算</h2>
+                                <div className="space-y-4">
+                                    <input type="number" id="j" placeholder="輸入日幣金額 (¥)" className="w-full bg-black/50 border border-gray-700 p-3 rounded-lg outline-none" />
+                                    <button onClick={() => {
+                                        const j = document.getElementById('j').value;
+                                        const cost = j * data.rate;
+                                        alert(`台幣成本: NT$ ${Math.round(cost)}\n建議售價 (含20%利潤): NT$ ${Math.round(cost * 1.2)}`);
+                                    }} className="w-full bg-red-600 hover:bg-red-700 py-4 rounded-xl font-bold transition">執行專業分析</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
