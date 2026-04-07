@@ -8,9 +8,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 升級到 v4 版本以支援最新的 Node.js 環境
-      - uses: actions/checkout@v4 
+      # 關鍵修正：將 v3 升級到 v4，支援 Node.js 20
+      - name: Checkout code
+        uses: actions/checkout@v4 
 
+      # 關鍵修正：將 v4 升級到 v5，支援 Node.js 20
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
