@@ -109,4 +109,9 @@
             "value": 98
         }
     ]
+    "monthly_sales": [
+    {"month": "10月", "volume": 45},
+    {"month": "11月", "volume": 52},
+    {"month": "12月", "volume": 88}
+]
 }
