@@ -70,7 +70,7 @@
                 const ctxSales = document.getElementById('salesChart')?.getContext('2d');
                 if (ctxSales) {
                     const months = ["10月", "11月", "12月", "1月", "2月", "3月"];
-                    const salesVolume = [45, 52, 88, 65, 48, 72]; // 這裡可以改為從 data.json 讀取
+                    const salesVolume = [data.monthly_sales]; // 這裡可以改為從 data.json 讀取
                     new Chart(ctxSales, {
                         type: 'bar',
                         data: {
