@@ -66,28 +66,33 @@
                     });
                 }
 
-                // 2. 每月代購銷量 (新增功能)
-                const ctxSales = document.getElementById('salesChart')?.getContext('2d');
-                if (ctxSales) {
-                    const months = ["10月", "11月", "12月", "1月", "2月", "3月"];
-                    const salesVolume = [data.monthly_sales]; // 這裡可以改為從 data.json 讀取
-                    new Chart(ctxSales, {
-                        type: 'bar',
-                        data: {
-                            labels: months,
-                            datasets: [{
-                                label: '銷量',
-                                data: salesVolume,
-                                backgroundColor: '#334155',
-                                borderRadius: 4
-                            }]
-                        },
-                        options: {
-                            plugins: { legend: { display: false } },
-                            scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
-                        }
-                    });
-                }
+// 2. 每月代購銷量 (修正後的動態指向)
+const ctxSales = document.getElementById('salesChart')?.getContext('2d');
+if (ctxSales && data.monthly_sales) { // 確保數據存在
+    new Chart(ctxSales, {
+        type: 'bar',
+        data: {
+            // 從 JSON 讀取月份標籤
+            labels: data.monthly_sales.map(s => s.month), 
+            datasets: [{
+                label: '銷量',
+                // 從 JSON 讀取數量
+                data: data.monthly_sales.map(s => s.volume), 
+                backgroundColor: '#334155',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { 
+                y: { beginAtZero: true, grid: { display: false } }, 
+                x: { grid: { display: false } } 
+            }
+        }
+    });
+}
 
                 // 3. 排行榜小趨勢圖
                 data.ranking.forEach((item, i) => {
