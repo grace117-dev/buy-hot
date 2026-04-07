@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JAPAN PRO | 日本代購決策終端 - 栞</title>
+    <title>JAPAN PRO v2.0 | 跨境貿易決策終端</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;900&family=Noto+Sans+TC:wght@300;400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-base: #fdfcfc; --bg-card: #ffffff; --text-main: #334155; --accent: #f43f5e; --border: #e2e8f0; }
-        body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg-base); color: var(--text-main); letter-spacing: 0.05em; }
-        h1, h2, .jp-font { font-family: 'Noto Serif JP', serif; }
-        .wabi-sabi-card { background: var(--bg-card); border: 1px solid var(--border); transition: all 0.4s; }
-        .rank-number { font-family: 'Noto Serif JP', serif; font-weight: 900; color: var(--accent); opacity: 0.15; font-size: 3.5rem; line-height: 1; }
+        :root { --glass: rgba(255, 255, 255, 0.8); --accent: #f43f5e; --panel: #1e293b; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: #f8fafc; color: #334155; }
+        .jp-serif { font-family: 'Noto Serif JP', serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-card { background: white; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: 0.3s; }
+        .glass-card:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .sidebar { background: var(--panel); color: white; }
     </style>
 </head>
 <body>
@@ -27,156 +29,225 @@
 
         function App() {
             const [data, setData] = useState(null);
-            const [calc, setCalc] = useState({ jpy: '', weight: 0.5 });
-            const chartsInit = useRef(false);
+            const [calc, setCalc] = useState({ jpy: '', weight: 1 });
+            const chartRefs = useRef({});
 
             useEffect(() => {
-                // 強制抓取最新 JSON，避免快取
                 fetch(`./data.json?t=${new Date().getTime()}`)
                     .then(res => res.json())
                     .then(d => setData(d))
-                    .catch(e => console.error("Data Load Error:", e));
+                    .catch(e => console.error("Load Error:", e));
             }, []);
 
             useEffect(() => {
-                // 核心修正：確保 data 存在且只初始化一次圖表
-                if (data && !chartsInit.current) {
-                    setTimeout(() => {
-                        renderRadarChart(data.ratio_radar);
-                        renderLineCharts(data.ranking, data.dates);
-                        lucide.createIcons();
-                        chartsInit.current = true;
-                    }, 300);
+                if (data) {
+                    initCharts();
+                    lucide.createIcons();
                 }
             }, [data]);
 
-            const renderRadarChart = (radarData) => {
-                const el = document.getElementById('radarChart');
-                if (!el) return;
-                new Chart(el.getContext('2d'), {
-                    type: 'radar',
-                    data: {
-                        labels: radarData.map(d => d.category),
-                        datasets: [{
-                            data: radarData.map(d => d.value),
-                            backgroundColor: 'rgba(244, 63, 94, 0.1)',
-                            borderColor: '#f43f5e',
-                            borderWidth: 1,
-                            pointRadius: 2
-                        }]
-                    },
-                    options: { 
-                        scales: { r: { min: 0, max: 100, ticks: { display: false } } },
-                        plugins: { legend: { display: false } }
+            const initCharts = () => {
+                // 1. 雷達圖
+                const ctxRadar = document.getElementById('radarChart')?.getContext('2d');
+                if (ctxRadar) {
+                    new Chart(ctxRadar, {
+                        type: 'radar',
+                        data: {
+                            labels: data.ratio_radar.map(d => d.category),
+                            datasets: [{
+                                data: data.ratio_radar.map(d => d.value),
+                                backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                                borderColor: '#f43f5e',
+                                borderWidth: 2,
+                                pointBackgroundColor: '#f43f5e'
+                            }]
+                        },
+                        options: { scales: { r: { ticks: { display: false }, grid: { color: '#e2e8f0' } } }, plugins: { legend: { display: false } } }
+                    });
+                }
+
+                // 2. 每月代購銷量 (新增功能)
+                const ctxSales = document.getElementById('salesChart')?.getContext('2d');
+                if (ctxSales) {
+                    const months = ["10月", "11月", "12月", "1月", "2月", "3月"];
+                    const salesVolume = [45, 52, 88, 65, 48, 72]; // 這裡可以改為從 data.json 讀取
+                    new Chart(ctxSales, {
+                        type: 'bar',
+                        data: {
+                            labels: months,
+                            datasets: [{
+                                label: '銷量',
+                                data: salesVolume,
+                                backgroundColor: '#334155',
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
+                        }
+                    });
+                }
+
+                // 3. 排行榜小趨勢圖
+                data.ranking.forEach((item, i) => {
+                    const ctx = document.getElementById(`spark-line-${i}`)?.getContext('2d');
+                    if (ctx) {
+                        new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: data.dates,
+                                datasets: [{ data: item.trend, borderColor: '#f43f5e', borderWidth: 1.5, tension: 0.4, pointRadius: 0 }]
+                            },
+                            options: { scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false } } }
+                        });
                     }
                 });
             };
 
-            const renderLineCharts = (ranking, dates) => {
-                ranking.forEach((item, i) => {
-                    const el = document.getElementById(`lineChart-${i}`);
-                    if (!el) return;
-                    new Chart(el.getContext('2d'), {
-                        type: 'line',
-                        data: {
-                            labels: dates,
-                            datasets: [{
-                                data: item.trend,
-                                borderColor: i === 0 ? '#f43f5e' : '#94a3b8',
-                                borderWidth: 1.5,
-                                tension: 0.4,
-                                pointRadius: 0
-                            }]
-                        },
-                        options: {
-                            scales: { x: { display: false }, y: { display: false, min: 0, max: 100 } },
-                            plugins: { legend: { display: false } }
-                        }
-                    });
-                });
-            };
+            if (!data) return <div className="flex items-center justify-center h-screen jp-serif text-rose-500 text-2xl animate-pulse">SYSTEM INITIALIZING...</div>;
 
-            if (!data) return <div className="p-20 text-center jp-font text-rose-600">數據讀取中...</div>;
-
-            const totalCost = Math.round((calc.jpy * data.rate) + (calc.weight * 230));
+            const ntdBase = Math.round(calc.jpy * data.rate);
+            const shipping = Math.round(calc.weight * 230);
+            const totalCost = ntdBase + shipping;
 
             return (
-                <div className="min-h-screen pb-16">
-                    <header className="max-w-[1400px] mx-auto p-10 flex justify-between items-center border-b border-gray-100">
-                        <div>
-                            <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3">
-                                <i data-lucide="compass" className="text-rose-600"></i> 日本代購決策終端
-                            </h1>
-                            <p className="text-slate-500 text-xs mt-1.5 jp-font tracking-widest">最後更新：{data.update_time}</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Live JPY/TWD</p>
-                            <p className="text-5xl font-black text-slate-900 tracking-tighter">{data.rate.toFixed(4)}</p>
-                        </div>
-                    </header>
+                <div className="flex min-h-screen">
+                    {/* 左側側邊欄 */}
+                    <aside className="w-20 sidebar flex flex-col items-center py-10 space-y-10 border-r border-slate-700">
+                        <div className="w-10 h-10 bg-rose-600 rounded-lg flex items-center justify-center font-black text-xl">栞</div>
+                        <nav className="flex flex-col space-y-8 opacity-40">
+                            <i data-lucide="layout-grid" className="w-6 h-6"></i>
+                            <i data-lucide="bar-chart-3" className="w-6 h-6 text-rose-500 opacity-100"></i>
+                            <i data-lucide="package" className="w-6 h-6"></i>
+                            <i data-lucide="settings" className="w-6 h-6"></i>
+                        </nav>
+                    </aside>
 
-                    <main className="max-w-[1400px] mx-auto px-10 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
-                        {/* 左側：雷達圖 */}
-                        <div className="lg:col-span-3 space-y-6">
-                            <h2 className="text-sm font-bold flex items-center gap-2 text-slate-500 uppercase tracking-widest">
-                                <i data-lucide="hexagon" className="text-rose-500 w-4 h-4"></i> 分類綜合實力
-                            </h2>
-                            <div className="wabi-sabi-card p-8 rounded-2xl h-[360px] flex flex-col justify-center items-center">
-                                <canvas id="radarChart"></canvas>
-                                <div className="absolute text-center mt-[-10px]">
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase">品項</p>
-                                    <p className="text-4xl font-black text-slate-800">{data.ranking.length}</p>
+                    {/* 主內容區 */}
+                    <main className="flex-1 overflow-y-auto bg-[#f8fafc]">
+                        {/* 頂部導航 */}
+                        <header className="h-20 bg-white border-b border-slate-200 px-8 flex justify-between items-center sticky top-0 z-10">
+                            <div>
+                                <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                    市場動態終端 <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded">v2.0 PRO</span>
+                                </h1>
+                            </div>
+                            <div className="flex items-center gap-8">
+                                <div className="text-right">
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Current Exchange Rate</p>
+                                    <p className="text-2xl font-black text-slate-900 mono leading-none">1 JPY = {data.rate.toFixed(4)} TWD</p>
+                                </div>
+                                <div className="h-10 w-[1px] bg-slate-200"></div>
+                                <p className="text-xs font-medium text-slate-500">更新時間：{data.update_time}</p>
+                            </div>
+                        </header>
+
+                        {/* 內容網格 */}
+                        <div className="p-8 grid grid-cols-12 gap-6">
+                            
+                            {/* 第一排：數據概覽 */}
+                            <div className="col-span-12 lg:col-span-8 grid grid-cols-3 gap-6">
+                                <div className="glass-card p-6 rounded-2xl">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="p-2 bg-rose-50 rounded-lg"><i data-lucide="shopping-cart" className="text-rose-500 w-5 h-5"></i></div>
+                                        <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded">+12%</span>
+                                    </div>
+                                    <p className="text-slate-400 text-xs font-bold uppercase">本月代購單量</p>
+                                    <p className="text-3xl font-black text-slate-800 mt-1">72 <span className="text-sm font-normal text-slate-400">Orders</span></p>
+                                </div>
+                                <div className="glass-card p-6 rounded-2xl">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="p-2 bg-blue-50 rounded-lg"><i data-lucide="activity" className="text-blue-500 w-5 h-5"></i></div>
+                                    </div>
+                                    <p className="text-slate-400 text-xs font-bold uppercase">熱門類別</p>
+                                    <p className="text-2xl font-black text-slate-800 mt-1 jp-serif">醫藥保健</p>
+                                </div>
+                                <div className="glass-card p-6 rounded-2xl">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="p-2 bg-amber-50 rounded-lg"><i data-lucide="database" className="text-amber-500 w-5 h-5"></i></div>
+                                    </div>
+                                    <p className="text-slate-400 text-xs font-bold uppercase">平均利潤率</p>
+                                    <p className="text-3xl font-black text-slate-800 mt-1">24.5<span className="text-sm font-normal text-slate-400">%</span></p>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* 中間：排行榜 */}
-                        <div className="lg:col-span-5 space-y-6">
-                            <h2 className="text-sm font-bold flex items-center gap-2 text-slate-500 uppercase tracking-widest">
-                                <i data-lucide="trending-up" className="text-rose-500 w-4 h-4"></i> 台灣熱度流動排行
-                            </h2>
-                            <div className="space-y-4">
-                                {data.ranking.map((item, i) => (
-                                    <div key={i} className="wabi-sabi-card p-6 rounded-2xl flex justify-between items-center relative overflow-hidden group">
-                                        <div className="flex items-center gap-5 z-10">
-                                            <div className="rank-number">{i + 1}</div>
-                                            <div>
-                                                <h3 className="font-bold text-slate-900 text-lg">{item.name}</h3>
-                                                <p className="text-xs text-slate-500 jp-font">
-                                                    <span className="text-rose-600 font-medium">{item.cat}</span> • ¥{item.jpy.toLocaleString()}
-                                                </p>
+                            {/* 第一排右：利潤精算 */}
+                            <div className="col-span-12 lg:col-span-4 row-span-2">
+                                <div className="glass-card p-8 rounded-3xl h-full border-t-4 border-rose-600 bg-slate-900 text-white">
+                                    <h2 className="text-sm font-bold uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
+                                        <i data-lucide="calculator" className="w-4 h-4 text-rose-500"></i> Profit Calculator
+                                    </h2>
+                                    <div className="space-y-8">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-500 block mb-2 uppercase">日幣原價 (JPY)</label>
+                                            <input type="number" className="w-full bg-slate-800 border-none p-4 rounded-xl text-2xl font-bold mono focus:ring-2 focus:ring-rose-500 outline-none transition" placeholder="0" value={calc.jpy} onChange={e => setCalc({...calc, jpy: e.target.value})} />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-500 block mb-2 uppercase">預估重量 (KG)</label>
+                                            <div className="flex items-center gap-4">
+                                                <input type="range" min="0.1" max="10" step="0.1" className="flex-1 accent-rose-500" value={calc.weight} onChange={e => setCalc({...calc, weight: e.target.value})} />
+                                                <span className="mono font-bold w-12 text-rose-500">{calc.weight}kg</span>
                                             </div>
                                         </div>
-                                        <div className="absolute inset-x-0 bottom-0 h-16 px-6 opacity-40 group-hover:opacity-80 transition">
-                                            <canvas id={`lineChart-${i}`}></canvas>
+                                        <div className="pt-8 border-t border-slate-800">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-slate-400 text-sm">成本小計 (含運)</span>
+                                                <span className="mono">NT$ {totalCost.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between items-end">
+                                                <span className="font-bold text-lg">建議零售價</span>
+                                                <span className="text-4xl font-black text-rose-500 mono">NT$ {Math.round(totalCost * 1.25).toLocaleString()}</span>
+                                            </div>
+                                            <p className="text-[10px] text-slate-600 mt-4 italic">* 以 25% 毛利及 NT$230/kg 國際運費計算</p>
                                         </div>
-                                        <div className="text-right z-10">
-                                            <p className="text-sm font-bold text-slate-900 tracking-tight">NT$ {Math.round(item.jpy * data.rate)}</p>
-                                            <p className="text-[9px] bg-slate-100 px-1 rounded text-slate-400 mt-1">成本</p>
-                                        </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* 右側：計算機 */}
-                        <div className="lg:col-span-4 space-y-6">
-                            <h2 className="text-sm font-bold flex items-center gap-2 text-slate-500 uppercase tracking-widest">
-                                <i data-lucide="pencil" className="text-rose-500 w-4 h-4"></i> 利潤精算
-                            </h2>
-                            <div className="wabi-sabi-card p-8 rounded-3xl border-t-2 border-rose-600">
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="text-[10px] font-bold text-slate-400 block mb-2 uppercase tracking-widest">商品原價 (¥ JPY)</label>
-                                        <input type="number" className="w-full bg-slate-50 p-3 rounded-lg outline-none focus:border-rose-200 font-bold text-xl" value={calc.jpy} onChange={e => setCalc({...calc, jpy: e.target.value})} />
-                                    </div>
-                                    <div className="flex justify-between items-end border-t border-slate-100 pt-6">
-                                        <span className="text-slate-800 font-bold jp-font">建議售價 <span className="text-xs font-normal text-slate-400">(20%利潤)</span></span>
-                                        <span className="text-3xl font-black text-rose-600 tracking-tighter">NT$ {Math.round(totalCost * 1.2)}</span>
-                                    </div>
-                                    <p className="text-[10px] text-slate-400 text-center tracking-widest uppercase italic font-bold">Total Cost: NT$ {totalCost}</p>
                                 </div>
                             </div>
+
+                            {/* 第二排左：每月銷售趨勢 */}
+                            <div className="col-span-12 lg:col-span-5">
+                                <div className="glass-card p-8 rounded-2xl">
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Monthly Sales Volume Trend</h3>
+                                    <canvas id="salesChart" height="200"></canvas>
+                                </div>
+                            </div>
+
+                            {/* 第二排中：熱度分佈 */}
+                            <div className="col-span-12 lg:col-span-3">
+                                <div className="glass-card p-8 rounded-2xl">
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 text-center">Category Power</h3>
+                                    <canvas id="radarChart"></canvas>
+                                </div>
+                            </div>
+
+                            {/* 第三排：排行榜詳情 */}
+                            <div className="col-span-12">
+                                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <i data-lucide="list-ordered" className="w-4 h-4 text-rose-500"></i> 即時熱度商品分析
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                                    {data.ranking.map((item, i) => (
+                                        <div key={i} className="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <span className="mono text-4xl font-black text-slate-100 group-hover:text-rose-50 transition">{i+1}</span>
+                                                <span className="text-[10px] font-bold px-2 py-1 bg-slate-50 text-slate-400 rounded group-hover:bg-rose-500 group-hover:text-white transition uppercase tracking-tighter">{item.cat}</span>
+                                            </div>
+                                            <h4 className="font-bold text-slate-800 text-sm line-clamp-2 mb-2 h-10">{item.name}</h4>
+                                            <div className="flex items-end justify-between mt-4">
+                                                <div>
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase">Hot</p>
+                                                    <p className="text-xl font-black text-slate-800">{item.tw_hot}<span className="text-[10px] ml-0.5 opacity-30">PT</span></p>
+                                                </div>
+                                                <div className="w-16 h-8">
+                                                    <canvas id={`spark-line-${i}`}></canvas>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                         </div>
                     </main>
                 </div>
