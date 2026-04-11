@@ -1,15 +1,15 @@
 {
-    "update_time": "2026/04/10 18:09",
+    "update_time": "2026/04/11 17:51",
     "dates": [
-        "04/04",
         "04/05",
         "04/06",
         "04/07",
         "04/08",
         "04/09",
-        "04/10"
+        "04/10",
+        "04/11"
     ],
-    "rate": 0.1998,
+    "rate": 0.1993,
     "ranking": [
         {
             "name": "大正感冒藥 Gold A",
@@ -89,24 +89,24 @@
     ],
     "ratio_radar": [
         {
-            "category": "美妝保養",
-            "value": 95
-        },
-        {
-            "category": "醫藥保健",
-            "value": 98
-        },
-        {
             "category": "服飾配件",
             "value": 88
+        },
+        {
+            "category": "戶外露營",
+            "value": 82
         },
         {
             "category": "生活雜貨",
             "value": 75
         },
         {
-            "category": "戶外露營",
-            "value": 82
+            "category": "醫藥保健",
+            "value": 98
+        },
+        {
+            "category": "美妝保養",
+            "value": 95
         }
     ]
 }
